@@ -1,21 +1,21 @@
 from django.shortcuts import render, HttpResponse
 from myapp.models import Contact
-
-# Create your views here.
+from django.contrib import messages
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 def index(request):
     context = {
         "variable": "Manoj Shrestha"
     }
+   
     return render(request, 'index.html', context)
-    # return HttpResponse("This  is Home Page")
 
 def about(request):
-    # return HttpResponse("This  is about Page")
+    messages.success(request, "This is a success message!")
     return render(request, 'about.html')
 
 def services(request):
-    # return HttpResponse("This  is services Page")
     return render(request, 'services.html')
 
 def contact(request):
@@ -26,12 +26,18 @@ def contact(request):
         address2 = request.POST.get('address2')
         city = request.POST.get('city')
 
-        # Save the form data to the database
-        contact = Contact(email=email, password=password, address1=address1, address2=address2, city=city)
-        contact.save()
+        # Validate form inputs
+        if not email or not password or not address1 or not city:
+            messages.error(request, "All required fields must be filled out.")
+        else:
+            # Validate email format
+            try:
+                validate_email(email)
+                # Save data to the database
+                contact = Contact(email=email, password=password, address1=address1, address2=address2, city=city)
+                contact.save()
+                messages.success(request, "Message has been sent successfully.")
+            except ValidationError:
+                messages.error(request, "Enter a valid email address.")
 
-        # Pass a success message to the template
-        return render(request, 'contact.html', {"message": "Your details have been submitted successfully!"})
-
-    # Handle GET request
     return render(request, 'contact.html')
